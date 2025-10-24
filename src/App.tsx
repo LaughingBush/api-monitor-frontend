@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { RequestListView } from './components/RequestListView';
 import { RequestTableView } from './components/RequestTableView';
 import { ProblemsList } from './components/ProblemsList';
+import { Pagination } from './components/Pagination';
 import { apiService } from './services/api';
 import { ApiRequest, Problem, SortField, SortDirection, ViewMode, HttpMethod, ResponseStatus } from './types';
 import './App.css';
@@ -25,6 +26,11 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(20);
+  const [currentProblemPage, setCurrentProblemPage] = useState(1);
+
   // Fetch requests from backend
   useEffect(() => {
     const fetchRequests = async () => {
@@ -37,7 +43,8 @@ function App() {
         const filters: any = {
           sortBy: sortField,
           sortDirection: sortDirection,
-          limit: 100,
+          limit: itemsPerPage,
+          offset: (currentPage - 1) * itemsPerPage,
         };
 
         if (searchQuery) filters.search = searchQuery;
@@ -64,7 +71,12 @@ function App() {
     };
 
     fetchRequests();
-  }, [activeTab, searchQuery, filterMethod, filterStatus, filterTimeRange, sortField, sortDirection]);
+  }, [activeTab, searchQuery, filterMethod, filterStatus, filterTimeRange, sortField, sortDirection, currentPage, itemsPerPage]);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, filterMethod, filterStatus, filterTimeRange, sortField, sortDirection]);
 
   // Fetch problems from backend
   useEffect(() => {
@@ -78,7 +90,8 @@ function App() {
         const filters: any = {
           sortBy: 'lastOccurrence',
           sortDirection: 'desc',
-          limit: 100,
+          limit: itemsPerPage,
+          offset: (currentProblemPage - 1) * itemsPerPage,
         };
 
         if (searchQuery) filters.search = searchQuery;
@@ -97,7 +110,18 @@ function App() {
     };
 
     fetchProblems();
-  }, [activeTab, searchQuery, filterMethod, filterStatus]);
+  }, [activeTab, searchQuery, filterMethod, filterStatus, currentProblemPage, itemsPerPage]);
+
+  // Reset problem page when filters change
+  useEffect(() => {
+    setCurrentProblemPage(1);
+  }, [searchQuery, filterMethod, filterStatus]);
+
+  // Reset to page 1 when page size changes
+  useEffect(() => {
+    setCurrentPage(1);
+    setCurrentProblemPage(1);
+  }, [itemsPerPage]);
 
   return (
     <div className="app">
@@ -214,10 +238,11 @@ function App() {
           {error && (
             <div style={{
               padding: '20px',
-              backgroundColor: '#fee',
-              color: '#c33',
-              borderRadius: '8px',
-              marginBottom: '20px'
+              backgroundColor: 'rgba(255, 100, 100, 0.1)',
+              color: '#ff6b6b',
+              borderRadius: '12px',
+              marginBottom: '20px',
+              border: '1px solid rgba(255, 100, 100, 0.3)'
             }}>
               <strong>Error:</strong> {error}
             </div>
@@ -228,7 +253,7 @@ function App() {
               textAlign: 'center',
               padding: '40px',
               fontSize: '18px',
-              color: '#666'
+              color: 'rgba(168, 176, 255, 0.6)'
             }}>
               Loading...
             </div>
@@ -239,19 +264,35 @@ function App() {
               ) : (
                 <RequestTableView requests={requests} />
               )}
+
+              {totalRequests > itemsPerPage && (
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={Math.ceil(totalRequests / itemsPerPage)}
+                  onPageChange={setCurrentPage}
+                  totalItems={totalRequests}
+                  itemsPerPage={itemsPerPage}
+                  onPageSizeChange={setItemsPerPage}
+                />
+              )}
             </>
           ) : (
-            <ProblemsList problems={problems} viewMode={viewMode} />
+            <>
+              <ProblemsList problems={problems} viewMode={viewMode} />
+
+              {totalProblems > itemsPerPage && (
+                <Pagination
+                  currentPage={currentProblemPage}
+                  totalPages={Math.ceil(totalProblems / itemsPerPage)}
+                  onPageChange={setCurrentProblemPage}
+                  totalItems={totalProblems}
+                  itemsPerPage={itemsPerPage}
+                  onPageSizeChange={setItemsPerPage}
+                />
+              )}
+            </>
           )}
         </div>
-
-        <footer className="footer">
-          <p>
-            {activeTab === 'requests'
-              ? `Showing ${requests.length} of ${totalRequests} requests`
-              : `Showing ${problems.length} of ${totalProblems} problems`}
-          </p>
-        </footer>
       </div>
     </div>
   );

@@ -1,0 +1,9 @@
+.sparkline {
+  display: block;
+  opacity: 0.8;
+  transition: opacity 0.3s ease;
+}
+
+.sparkline:hover {
+  opacity: 1;
+}

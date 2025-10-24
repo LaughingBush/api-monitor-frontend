@@ -1,0 +1,123 @@
+.requests-graph {
+  background: rgba(15, 15, 35, 0.6);
+  border: 1px solid rgba(139, 92, 246, 0.15);
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  backdrop-filter: blur(20px);
+}
+
+.graph-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.graph-header h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  margin: 0;
+}
+
+.graph-stats {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.stat {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.stat-label {
+  font-size: 0.85rem;
+  color: rgba(168, 176, 255, 0.6);
+}
+
+.stat-value {
+  font-size: 1rem;
+  font-weight: 600;
+  color: rgba(168, 176, 255, 0.9);
+  background: rgba(139, 92, 246, 0.15);
+  padding: 0.25rem 0.75rem;
+  border-radius: 6px;
+}
+
+.graph-container {
+  position: relative;
+  width: 100%;
+  height: 150px;
+  background: rgba(10, 10, 30, 0.3);
+  border-radius: 12px;
+  padding: 1rem;
+  overflow-x: auto;
+}
+
+.graph-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  height: 100%;
+  min-width: 100%;
+}
+
+.graph-bar-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 20px;
+}
+
+.graph-bar {
+  width: 100%;
+  min-height: 4px;
+  background: rgba(139, 92, 246, 0.1);
+  border-radius: 4px 4px 0 0;
+  position: relative;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.graph-bar:hover {
+  background: rgba(139, 92, 246, 0.2);
+}
+
+.graph-bar-inner {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 100%;
+  background: linear-gradient(180deg, rgba(139, 92, 246, 0.8) 0%, rgba(219, 39, 119, 0.6) 100%);
+  border-radius: 4px 4px 0 0;
+  transition: all 0.3s ease;
+}
+
+.graph-bar:hover .graph-bar-inner {
+  background: linear-gradient(180deg, rgba(139, 92, 246, 1) 0%, rgba(219, 39, 119, 0.8) 100%);
+  box-shadow: 0 0 12px rgba(139, 92, 246, 0.5);
+}
+
+.graph-label {
+  font-size: 0.7rem;
+  color: rgba(168, 176, 255, 0.5);
+  white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+  .graph-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .graph-container {
+    height: 120px;
+  }
+}
