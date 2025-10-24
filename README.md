@@ -222,5 +222,5 @@ MIT
 ## Hackathon Submission
 
 **Treblle Ship Happens Hackathon 2025**
-Submission by: [Your Name]
+Submission by: Lovro Habuš
 Date: October 24, 2025
