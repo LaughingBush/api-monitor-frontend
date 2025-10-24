@@ -1,8 +1,8 @@
-import { useState, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { RequestListView } from './components/RequestListView';
 import { RequestTableView } from './components/RequestTableView';
 import { ProblemsList } from './components/ProblemsList';
-import { generateMockRequests, generateMockProblems } from './mockData';
+import { apiService } from './services/api';
 import { ApiRequest, Problem, SortField, SortDirection, ViewMode, HttpMethod, ResponseStatus } from './types';
 import './App.css';
 
@@ -18,88 +18,86 @@ function App() {
   const [filterStatus, setFilterStatus] = useState<ResponseStatus | 'all'>('all');
   const [filterTimeRange, setFilterTimeRange] = useState<'all' | '1h' | '6h' | '24h'>('all');
 
-  const requests = useMemo(() => generateMockRequests(), []);
-  const problems = useMemo(() => generateMockProblems(), []);
+  const [requests, setRequests] = useState<ApiRequest[]>([]);
+  const [problems, setProblems] = useState<Problem[]>([]);
+  const [totalRequests, setTotalRequests] = useState(0);
+  const [totalProblems, setTotalProblems] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // Filter and sort requests
-  const filteredRequests = useMemo(() => {
-    let filtered = [...requests];
+  // Fetch requests from backend
+  useEffect(() => {
+    const fetchRequests = async () => {
+      if (activeTab !== 'requests') return;
 
-    // Search filter
-    if (searchQuery) {
-      filtered = filtered.filter(req =>
-        req.path.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    }
+      setLoading(true);
+      setError(null);
 
-    // Method filter
-    if (filterMethod !== 'all') {
-      filtered = filtered.filter(req => req.method === filterMethod);
-    }
+      try {
+        const filters: any = {
+          sortBy: sortField,
+          sortDirection: sortDirection,
+          limit: 100,
+        };
 
-    // Status filter
-    if (filterStatus !== 'all') {
-      filtered = filtered.filter(req => req.response === filterStatus);
-    }
+        if (searchQuery) filters.search = searchQuery;
+        if (filterMethod !== 'all') filters.method = filterMethod;
+        if (filterStatus !== 'all') filters.response = filterStatus;
 
-    // Time range filter
-    if (filterTimeRange !== 'all') {
-      const now = Date.now();
-      const hours = parseInt(filterTimeRange);
-      const cutoff = now - hours * 60 * 60 * 1000;
-      filtered = filtered.filter(req => new Date(req.createdAt).getTime() >= cutoff);
-    }
+        // Time range filter
+        if (filterTimeRange !== 'all') {
+          const now = new Date();
+          const hours = parseInt(filterTimeRange);
+          const startTime = new Date(now.getTime() - hours * 60 * 60 * 1000);
+          filters.startTime = startTime.toISOString();
+        }
 
-    // Sort
-    filtered.sort((a, b) => {
-      let aVal: number, bVal: number;
-
-      if (sortField === 'createdAt') {
-        aVal = new Date(a.createdAt).getTime();
-        bVal = new Date(b.createdAt).getTime();
-      } else {
-        aVal = a.responseTime;
-        bVal = b.responseTime;
+        const response = await apiService.getRequests(filters);
+        setRequests(response.data);
+        setTotalRequests(response.total);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to fetch requests');
+        console.error('Error fetching requests:', err);
+      } finally {
+        setLoading(false);
       }
+    };
 
-      return sortDirection === 'asc' ? aVal - bVal : bVal - aVal;
-    });
+    fetchRequests();
+  }, [activeTab, searchQuery, filterMethod, filterStatus, filterTimeRange, sortField, sortDirection]);
 
-    return filtered;
-  }, [requests, searchQuery, filterMethod, filterStatus, filterTimeRange, sortField, sortDirection]);
+  // Fetch problems from backend
+  useEffect(() => {
+    const fetchProblems = async () => {
+      if (activeTab !== 'problems') return;
 
-  // Filter and sort problems
-  const filteredProblems = useMemo(() => {
-    let filtered = [...problems];
+      setLoading(true);
+      setError(null);
 
-    // Search filter
-    if (searchQuery) {
-      filtered = filtered.filter(prob =>
-        prob.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        prob.path.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    }
+      try {
+        const filters: any = {
+          sortBy: 'lastOccurrence',
+          sortDirection: 'desc',
+          limit: 100,
+        };
 
-    // Method filter
-    if (filterMethod !== 'all') {
-      filtered = filtered.filter(prob => prob.method === filterMethod);
-    }
+        if (searchQuery) filters.search = searchQuery;
+        if (filterMethod !== 'all') filters.method = filterMethod;
+        if (filterStatus !== 'all') filters.status = filterStatus;
 
-    // Status filter
-    if (filterStatus !== 'all') {
-      filtered = filtered.filter(prob => prob.status === filterStatus);
-    }
+        const response = await apiService.getProblems(filters);
+        setProblems(response.data);
+        setTotalProblems(response.total);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to fetch problems');
+        console.error('Error fetching problems:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    // Time range filter
-    if (filterTimeRange !== 'all') {
-      const now = Date.now();
-      const hours = parseInt(filterTimeRange);
-      const cutoff = now - hours * 60 * 60 * 1000;
-      filtered = filtered.filter(prob => new Date(prob.lastOccurrence).getTime() >= cutoff);
-    }
-
-    return filtered;
-  }, [problems, searchQuery, filterMethod, filterStatus, filterTimeRange]);
+    fetchProblems();
+  }, [activeTab, searchQuery, filterMethod, filterStatus]);
 
   return (
     <div className="app">
@@ -213,24 +211,45 @@ function App() {
         </div>
 
         <div className="content">
-          {activeTab === 'requests' ? (
+          {error && (
+            <div style={{
+              padding: '20px',
+              backgroundColor: '#fee',
+              color: '#c33',
+              borderRadius: '8px',
+              marginBottom: '20px'
+            }}>
+              <strong>Error:</strong> {error}
+            </div>
+          )}
+
+          {loading ? (
+            <div style={{
+              textAlign: 'center',
+              padding: '40px',
+              fontSize: '18px',
+              color: '#666'
+            }}>
+              Loading...
+            </div>
+          ) : activeTab === 'requests' ? (
             <>
               {viewMode === 'list' ? (
-                <RequestListView requests={filteredRequests} />
+                <RequestListView requests={requests} />
               ) : (
-                <RequestTableView requests={filteredRequests} />
+                <RequestTableView requests={requests} />
               )}
             </>
           ) : (
-            <ProblemsList problems={filteredProblems} viewMode={viewMode} />
+            <ProblemsList problems={problems} viewMode={viewMode} />
           )}
         </div>
 
         <footer className="footer">
           <p>
             {activeTab === 'requests'
-              ? `Showing ${filteredRequests.length} of ${requests.length} requests`
-              : `Showing ${filteredProblems.length} of ${problems.length} problems`}
+              ? `Showing ${requests.length} of ${totalRequests} requests`
+              : `Showing ${problems.length} of ${totalProblems} problems`}
           </p>
         </footer>
       </div>

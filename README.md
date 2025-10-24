@@ -160,15 +160,60 @@ The application uses a modern dark theme with gradient backgrounds:
 - Safari (latest)
 - Edge (latest)
 
-## Development Notes
+## Backend Integration
 
-This is a frontend-only solution with no backend dependencies. All data is mocked and stored in memory. In a production environment, you would:
+This frontend is now **fully integrated** with the API Monitor Backend!
 
-1. Replace mock data with actual API calls to a backend service
-2. Implement real-time updates via WebSocket or polling
-3. Add authentication and authorization
-4. Implement data persistence
-5. Add more advanced filtering and analytics
+### Setup
+
+1. **Start the backend server** (from `api-monitor-backend` directory):
+```bash
+npm run dev
+```
+
+2. **Configure the frontend** - Create `.env` file:
+```bash
+cp .env.example .env
+```
+
+Default configuration:
+```
+VITE_API_URL=http://localhost:3000
+```
+
+3. **Start the frontend**:
+```bash
+npm run dev
+```
+
+### API Integration Features
+
+- ✅ **Real-time data** fetching from backend
+- ✅ **Server-side filtering** - All filters applied on backend
+- ✅ **Server-side sorting** - Efficient sorting on database level
+- ✅ **Loading states** - Visual feedback during API calls
+- ✅ **Error handling** - User-friendly error messages
+- ✅ **Type-safe API** - Full TypeScript integration
+
+### API Service
+
+The frontend uses `src/services/api.ts` to communicate with the backend:
+
+```typescript
+// Fetch requests with filters
+apiService.getRequests({
+  method: 'GET',
+  response: 200,
+  sortBy: 'responseTime',
+  sortDirection: 'desc'
+});
+
+// Fetch problems with filters
+apiService.getProblems({
+  severity: 'critical',
+  search: 'payment'
+});
+```
 
 ## License
 
