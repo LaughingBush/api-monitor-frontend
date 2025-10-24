@@ -2,6 +2,10 @@
 
 A modern, feature-rich API monitoring dashboard built with React and TypeScript for the Treblle Ship Happens Hackathon 2025.
 
+## 🚀 Live Demo
+
+**App:** https://api-monitor-frontend-ruddy.vercel.app/
+
 ## Features
 
 ### Base Requirements
